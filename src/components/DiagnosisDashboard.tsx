@@ -12,6 +12,7 @@ import {
   Printer,
   Mic,
   Volume2,
+  ChevronDown,
 } from "lucide-react";
 import { getExpertAdvice } from "@/lib/gemini";
 import { treatmentData } from "@/data/treatments";
@@ -21,13 +22,26 @@ interface DiagnosisProps {
   confidence: number;
 }
 
+const LANGUAGES = [
+  { code: "en-IN", name: "English", native: "English" },
+  { code: "hi-IN", name: "Hindi", native: "हिन्दी" },
+  { code: "mr-IN", name: "Marathi", native: "मराठी" },
+  { code: "gu-IN", name: "Gujarati", native: "ગુજરાતી" },
+  { code: "ta-IN", name: "Tamil", native: "தமிழ்" },
+  { code: "te-IN", name: "Telugu", native: "తెలుగు" },
+  { code: "kn-IN", name: "Kannada", native: "ಕನ್ನಡ" },
+  { code: "bn-IN", name: "Bengali", native: "বাংলা" },
+  { code: "pa-IN", name: "Punjabi", native: "ਪੰਜਾਬੀ" },
+];
+
 export default function DiagnosisDashboard({
   result,
   confidence,
 }: DiagnosisProps) {
   const [loadingExpert, setLoadingExpert] = useState(false);
   const [expertAdvice, setExpertAdvice] = useState<string | null>(null);
-  const [showMarathi, setShowMarathi] = useState(false);
+  const [selectedLang, setSelectedLang] = useState(LANGUAGES[0]);
+  const [showLangMenu, setShowLangMenu] = useState(false);
   const [calibratedConfidence, setCalibratedConfidence] = useState(confidence);
   const [scanImage, setScanImage] = useState<string | null>(null);
   const [isSpeaking, setIsSpeaking] = useState(false);
@@ -85,6 +99,7 @@ export default function DiagnosisDashboard({
       const fullReport = await getExpertAdvice(
         staticInfo.name,
         calibratedConfidence,
+        selectedLang.name
       );
       setExpertAdvice(fullReport);
     } catch (err: any) {
@@ -95,8 +110,6 @@ export default function DiagnosisDashboard({
   };
 
   const handleSpeak = () => {
-    console.log("Voice Button Clicked. Expert Advice Present:", !!expertAdvice);
-
     if (!expertAdvice || !synth.current) {
       alert("Please 'Unlock Analysis' first to enable voice playback.");
       return;
@@ -108,11 +121,8 @@ export default function DiagnosisDashboard({
       return;
     }
 
-    const sections = expertAdvice.split(/### 4\.|४\./);
-    const rawText = showMarathi ? sections[1] : sections[0];
-
     // Clean text: removes markdown and problematic emojis
-    const cleanText = rawText
+    const cleanText = expertAdvice
       .replace(/[#*`_]/g, "")
       .replace(
         /[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/gu,
@@ -122,21 +132,17 @@ export default function DiagnosisDashboard({
     const utterance = new SpeechSynthesisUtterance(cleanText);
     const voices = synth.current.getVoices();
 
-    if (showMarathi) {
-      // Find Marathi voice (Google or Local)
-      const mrVoice = voices.find(
-        (v) => v.lang.includes("mr-IN") || v.lang.includes("mr_IN"),
-      );
-      if (mrVoice) utterance.voice = mrVoice;
-      utterance.lang = "mr-IN";
-    } else {
-      const enVoice = voices.find(
-        (v) => v.lang.includes("en-IN") || v.lang.includes("en-GB"),
-      );
-      if (enVoice) utterance.voice = enVoice;
-      utterance.lang = "en-IN";
+    // Try to find a voice matching the selected language code
+    // Fallback to a general match if specific locale isn't found
+    const targetVoice =
+      voices.find(v => v.lang === selectedLang.code) ||
+      voices.find(v => v.lang.startsWith(selectedLang.code.split('-')[0]));
+
+    if (targetVoice) {
+      utterance.voice = targetVoice;
     }
 
+    utterance.lang = selectedLang.code;
     utterance.rate = 0.9;
     utterance.onstart = () => setIsSpeaking(true);
     utterance.onend = () => setIsSpeaking(false);
@@ -151,10 +157,6 @@ export default function DiagnosisDashboard({
       synth.current?.speak(utterance);
     }, 100);
   };
-
-  const sections = expertAdvice ? expertAdvice.split(/### 4\.|४\./) : ["", ""];
-  const englishContent = sections[0];
-  const marathiContent = sections[1] ? `### मराठी सारांश\n${sections[1]}` : "";
 
   return (
     <div className="relative">
@@ -205,7 +207,7 @@ export default function DiagnosisDashboard({
                     >
                       <div className="flex justify-between items-center mb-8 print:hidden">
                         <div className="flex items-center gap-3 text-emerald-400 font-black uppercase text-xs tracking-widest">
-                          <BrainCircuit size={20} /> Agronomist Report
+                          <BrainCircuit size={20} /> Agronomist Report ({selectedLang.name})
                         </div>
                         <button
                           onClick={() => window.print()}
@@ -231,7 +233,7 @@ export default function DiagnosisDashboard({
                             ),
                           }}
                         >
-                          {showMarathi ? marathiContent : englishContent}
+                          {expertAdvice}
                         </ReactMarkdown>
                       </div>
                     </motion.div>
@@ -260,19 +262,64 @@ export default function DiagnosisDashboard({
                   </li>
                 ))}
               </ul>
-              {!expertAdvice && (
+
+              <div className="mt-12 space-y-4">
+                {/* Language Selector */}
+                <div className="relative">
+                  <button
+                    onClick={() => setShowLangMenu(!showLangMenu)}
+                    disabled={loadingExpert}
+                    className="w-full flex items-center justify-between p-4 rounded-xl bg-white/5 border border-white/10 text-white text-sm font-medium hover:bg-white/10 transition-colors disabled:opacity-50"
+                  >
+                    <div className="flex items-center gap-3">
+                      <Languages size={18} className="text-emerald-400" />
+                      <span>{selectedLang.native} ({selectedLang.name})</span>
+                    </div>
+                    <ChevronDown size={16} className={`transition-transform ${showLangMenu ? 'rotate-180' : ''}`} />
+                  </button>
+
+                  <AnimatePresence>
+                    {showLangMenu && (
+                      <motion.div
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: 10 }}
+                        className="absolute bottom-full left-0 w-full mb-2 bg-[#0a0a0a] border border-white/10 rounded-xl shadow-xl overflow-hidden backdrop-blur-xl z-50 max-h-60 overflow-y-auto"
+                      >
+                        {LANGUAGES.map((lang) => (
+                          <button
+                            key={lang.code}
+                            onClick={() => {
+                              setSelectedLang(lang);
+                              setShowLangMenu(false);
+                            }}
+                            className={`w-full text-left p-3 text-sm hover:bg-emerald-500/10 transition-colors flex items-center justify-between ${selectedLang.code === lang.code ? 'text-emerald-400 font-bold bg-emerald-500/5' : 'text-slate-300'
+                              }`}
+                          >
+                            <span>{lang.native}</span>
+                            <span className="text-xs text-slate-500 uppercase">{lang.name}</span>
+                          </button>
+                        ))}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+
                 <button
                   onClick={handleConsultExpert}
                   disabled={loadingExpert}
-                  className="w-full mt-12 py-8 rounded-2xl bg-white text-black font-black uppercase tracking-widest text-[10px] hover:bg-emerald-400 disabled:opacity-50"
+                  className="w-full py-4 rounded-xl bg-white text-black font-black uppercase tracking-widest text-[10px] hover:bg-emerald-400 disabled:opacity-50 transition-colors shadow-lg shadow-white/5"
                 >
                   {loadingExpert ? (
-                    <Loader2 className="animate-spin mx-auto" />
+                    <div className="flex items-center justify-center gap-2">
+                      <Loader2 className="animate-spin" size={16} />
+                      Analyzing...
+                    </div>
                   ) : (
                     "Unlock Analysis"
                   )}
                 </button>
-              )}
+              </div>
             </div>
           </div>
         </div>
@@ -293,29 +340,15 @@ export default function DiagnosisDashboard({
           )}
         </AnimatePresence>
 
-        {/* Translation Trigger */}
-        <button
-          onClick={() => {
-            console.log(
-              "Translation Button Clicked. Current state:",
-              showMarathi,
-            );
-            setShowMarathi(!showMarathi);
-          }}
-          className={`w-14 h-14 rounded-full glass-panel flex items-center justify-center transition-all shadow-2xl ${showMarathi ? "text-black bg-emerald-500 border-emerald-500" : "text-emerald-400 border-white/10"}`}
-        >
-          <Languages size={20} />
-        </button>
-
         {/* Voice Trigger */}
         <button
           onClick={handleSpeak}
-          className={`w-20 h-20 rounded-full flex items-center justify-center transition-all shadow-[0_0_40px_rgba(16,185,129,0.2)] ${isSpeaking ? "bg-red-500 animate-pulse" : "bg-emerald-500 hover:bg-emerald-400"}`}
+          className={`w-16 h-16 rounded-full flex items-center justify-center transition-all shadow-[0_0_40px_rgba(16,185,129,0.2)] ${isSpeaking ? "bg-red-500 animate-pulse" : "bg-emerald-500 hover:bg-emerald-400"}`}
         >
           {isSpeaking ? (
-            <Volume2 className="text-white" size={32} />
+            <Volume2 className="text-white" size={24} />
           ) : (
-            <Mic className="text-black" size={32} />
+            <Mic className="text-black" size={24} />
           )}
         </button>
       </div>
