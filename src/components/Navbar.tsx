@@ -8,17 +8,19 @@ import {
   CloudSun,
   Users,
   Github,
+  MessageSquare, // Added for the Assistant icon
 } from "lucide-react";
 import { motion } from "framer-motion";
 
 export default function Navbar() {
   const pathname = usePathname();
 
-  // Navigation array with Team moved to the last position
+  // Navigation array with Assistant added
   const navLinks = [
     { name: "Home", href: "/", icon: <Home size={16} /> },
     { name: "Analyzer", href: "/analyze", icon: <LayoutDashboard size={16} /> },
     { name: "Weather", href: "/weather", icon: <CloudSun size={16} /> },
+    { name: "Assistant", href: "/chatbot", icon: <MessageSquare size={16} /> },
     { name: "Team", href: "/team", icon: <Users size={16} /> },
   ];
 
