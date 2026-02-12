@@ -19,15 +19,21 @@
     "clsx": "^2.1.1",
     "dotenv": "^17.2.4",
     "framer-motion": "^12.34.0",
+    "groq-sdk": "^0.37.0",
     "gsap": "^3.14.2",
     "i18next": "^25.8.5",
+<<<<<<< HEAD
     "jsonwebtoken": "^9.0.3",
+=======
+    "leaflet": "^1.9.4",
+>>>>>>> bdb87470c9be20c1c6ffb7206356832f229fe756
     "lucide-react": "^0.563.0",
     "mongoose": "^9.2.1",
     "next": "16.1.6",
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "react-i18next": "^16.5.4",
+    "react-leaflet": "^5.0.0",
     "react-markdown": "^10.1.0",
     "tailwind-merge": "^3.4.0"
   },

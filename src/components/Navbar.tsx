@@ -8,8 +8,12 @@ import {
   CloudSun,
   Users,
   Github,
+<<<<<<< HEAD
   LogOut,
   User as UserIcon,
+=======
+  MessageSquare, // Added for the Assistant icon
+>>>>>>> bdb87470c9be20c1c6ffb7206356832f229fe756
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/context/AuthContext";
@@ -20,11 +24,12 @@ export default function Navbar() {
   const { user, logout, loading } = useAuth();
   const [isProfileOpen, setIsProfileOpen] = useState(false);
 
-  // Navigation array with Team moved to the last position
+  // Navigation array with Assistant added
   const navLinks = [
     { name: "Home", href: "/", icon: <Home size={16} /> },
     { name: "Analyzer", href: "/analyze", icon: <LayoutDashboard size={16} /> },
     { name: "Weather", href: "/weather", icon: <CloudSun size={16} /> },
+    { name: "Assistant", href: "/chatbot", icon: <MessageSquare size={16} /> },
     { name: "Team", href: "/team", icon: <Users size={16} /> },
   ];
 
