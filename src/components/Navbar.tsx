@@ -8,11 +8,17 @@ import {
   CloudSun,
   Users,
   Github,
+  LogOut,
+  User as UserIcon,
 } from "lucide-react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
+import { useAuth } from "@/context/AuthContext";
+import { useState } from "react";
 
 export default function Navbar() {
   const pathname = usePathname();
+  const { user, logout, loading } = useAuth();
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
 
   // Navigation array with Team moved to the last position
   const navLinks = [
@@ -37,7 +43,7 @@ export default function Navbar() {
             <span className="text-xl font-black tracking-tighter uppercase leading-none">
               AGRIVISION <span className="text-emerald-500">2.0</span>
             </span>
-            <span className="text-[8px] font-bold text-emerald-500/50 uppercase tracking-[0.3em] mt-1">
+            <span className="text-xs font-bold text-emerald-500/50 uppercase tracking-[0.3em] mt-1">
               Null Resolver Labs
             </span>
           </div>
@@ -48,43 +54,104 @@ export default function Navbar() {
           {navLinks.map((link) => {
             const isActive = pathname === link.href;
             return (
-              <Link
-                key={link.name}
-                href={link.href}
-                className={`relative group flex items-center gap-2 text-[10px] font-black uppercase tracking-widest transition-colors ${
-                  isActive
-                    ? "text-emerald-400"
-                    : "text-gray-500 hover:text-white"
-                }`}
-              >
-                <span
-                  className={`${isActive ? "text-emerald-400" : "group-hover:text-emerald-400 transition-colors"}`}
+              <div key={link.name} className="relative group/link">
+                <Link
+                  href={link.href}
+                  className={`relative flex items-center gap-2 text-[10px] font-black uppercase tracking-widest transition-colors ${isActive
+                      ? "text-emerald-400"
+                      : "text-gray-500 hover:text-white"
+                    }`}
                 >
-                  {link.icon}
-                </span>
-                {link.name}
+                  <span
+                    className={`${isActive ? "text-emerald-400" : "group-hover/link:text-emerald-400 transition-colors"}`}
+                  >
+                    {link.icon}
+                  </span>
+                  {link.name}
 
-                {/* Visual Active/Hover Indicator */}
-                <span
-                  className={`absolute -bottom-1 left-0 h-px bg-emerald-500 transition-all duration-300 ${
-                    isActive ? "w-full" : "w-0 group-hover:w-full"
-                  }`}
-                />
-              </Link>
+                  {/* Visual Active/Hover Indicator */}
+                  <span
+                    className={`absolute -bottom-1 left-0 h-px bg-emerald-500 transition-all duration-300 ${isActive ? "w-full" : "w-0 group-hover/link:w-full"
+                      }`}
+                  />
+                </Link>
+              </div>
             );
           })}
 
           <div className="h-6 w-px bg-white/10 mx-2" />
 
+          {/* Auth Section */}
+          {!loading && (
+            <>
+              {user ? (
+                <div className="relative">
+                  <button
+                    onClick={() => setIsProfileOpen(!isProfileOpen)}
+                    className="flex items-center gap-3 p-1.5 pr-4 rounded-full border border-white/10 hover:border-emerald-500/50 bg-white/5 hover:bg-white/10 transition-all group"
+                  >
+                    <div className="w-8 h-8 rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-400 border border-emerald-500/30">
+                      <UserIcon size={16} />
+                    </div>
+                    <span className="text-xs font-bold text-slate-300 group-hover:text-white truncate max-w-[100px]">
+                      {user.name}
+                    </span>
+                  </button>
+
+                  <AnimatePresence>
+                    {isProfileOpen && (
+                      <motion.div
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: 10 }}
+                        className="absolute right-0 top-full mt-2 w-48 bg-[#0a0a0a] border border-white/10 rounded-xl shadow-xl overflow-hidden backdrop-blur-xl"
+                      >
+                        <div className="p-3 border-b border-white/5">
+                          <p className="text-xs text-slate-500 uppercase tracking-wider font-bold mb-1">Signed in as</p>
+                          <p className="text-sm text-white font-medium truncate">{user.email}</p>
+                        </div>
+                        <button
+                          onClick={() => {
+                            logout();
+                            setIsProfileOpen(false);
+                          }}
+                          className="w-full flex items-center gap-2 p-3 text-sm text-red-400 hover:bg-red-500/10 transition-colors text-left"
+                        >
+                          <LogOut size={16} />
+                          Sign Out
+                        </button>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              ) : (
+                <div className="flex items-center gap-4">
+                  <Link
+                    href="/login"
+                    className="text-xs font-bold uppercase tracking-widest text-slate-400 hover:text-white transition-colors"
+                  >
+                    Log In
+                  </Link>
+                  <Link
+                    href="/register"
+                    className="px-5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold uppercase tracking-widest rounded-full transition-all shadow-[0_0_20px_rgba(16,185,129,0.2)] hover:shadow-[0_0_30px_rgba(16,185,129,0.4)]"
+                  >
+                    Register
+                  </Link>
+                </div>
+              )}
+            </>
+          )}
+
           {/* GitHub Project Link */}
-          <a
+          {/* <a
             href="https://github.com"
             target="_blank"
             rel="noopener noreferrer"
             className="p-3 glass-panel border-white/10 hover:border-emerald-500/50 text-gray-400 hover:text-white transition-all rounded-full"
           >
             <Github size={18} />
-          </a>
+          </a> */}
         </div>
       </div>
     </nav>

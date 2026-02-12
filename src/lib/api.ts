@@ -14,6 +14,10 @@ export const getDiagnosis = async (
   const formData = new FormData();
   formData.append("file", imageFile);
 
+  if (!API_URL) {
+    throw new Error("NEXT_PUBLIC_HF_API_URL is not defined");
+  }
+
   try {
     const response = await axios.post(API_URL, formData, {
       headers: {
