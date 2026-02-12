@@ -51,10 +51,7 @@ export default function HeroPage() {
                       2.0
                     </span>
                   </h1>
-                  <p className="max-w-md text-gray-400 text-base md:text-lg font-medium leading-relaxed opacity-80">
-                    High-fidelity neural diagnostics for the Nashik-Pune
-                    agricultural belt.
-                  </p>
+                 
                 </div>
 
                 <motion.button
